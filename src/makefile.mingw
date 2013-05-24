@@ -5,17 +5,15 @@
 USE_UPNP:=0
 
 INCLUDEPATHS= \
- -I"/e/boost_1_53_0" \
- -I"/e/db-4.8.30.NC/build_unix" \
- -I"/e/openssl-1.0.1e/include" \
- -I"/e" \
- -I"/c/Projects/testcoin/src"
+ -I"C:\boost_1_53_0" \
+ -I"C:\db-4.8.30.NC\build_unix" \
+ -I"C:\openssl-1.0.1e\include" 
+
 
 LIBPATHS= \
- -L"/e/boost_1_53_0/stage/lib" \
- -L"/e/db-4.8.30.NC/build_unix" \
- -L"/e/openssl-1.0.1e" \
- -L"/e/upnpc-exe-win32"
+ -L"C:\boost_1_53_0\stage\lib" \
+ -L"C:\db-4.8.30.NC\build_unix" \
+ -L"C:\openssl-1.0.1e" 
 
 LIBS= \
  -l boost_system-mgw45-mt-d-1_53 \
@@ -33,8 +31,7 @@ CFLAGS=-mthreads -O2 -w -Wall -Wextra -Wformat -Wformat-security -Wno-unused-par
 TESTDEFS = -DTEST_DATA_DIR=$(abspath test/data)
 
 ifdef USE_UPNP
- INCLUDEPATHS += -I"/e"
- LIBPATHS += -L"/e/upnpc-exe-win32"
+ LIBPATHS += -L"C:\upnpc-exe-win32"
  LIBS += -l miniupnpc -l iphlpapi
  DEFS += -DSTATICLIB -DUSE_UPNP=$(USE_UPNP)
 endif
@@ -71,7 +68,7 @@ OBJS= \
     obj/noui.o
 
 
-all: junkcoind.exe
+all: luckycoind.exe
 
 obj/scrypt.o: scrypt.c
 	gcc -c $(CFLAGS) -o $@ $^
@@ -79,7 +76,7 @@ obj/scrypt.o: scrypt.c
 obj/%.o: %.cpp $(HEADERS)
 	g++ -c $(CFLAGS) -o $@ $<
 
-junkcoind.exe: $(OBJS:obj/%=obj/%)
+luckycoind.exe: $(OBJS:obj/%=obj/%)
 	g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ $(LIBS)
 
 TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
@@ -87,11 +84,11 @@ TESTOBJS := $(patsubst test/%.cpp,obj-test/%.o,$(wildcard test/*.cpp))
 obj-test/%.o: test/%.cpp $(HEADERS)
 	g++ -c $(TESTDEFS) $(CFLAGS) -o $@ $<
 
-test_junkcoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
+test_luckycoin.exe: $(TESTOBJS) $(filter-out obj/init.o,$(OBJS:obj/%=obj/%))
 	g++ $(CFLAGS) -o $@ $(LIBPATHS) $^ -lboost_unit_test_framework-mgw45-mt-d-1_53 $(LIBS)
 
 clean:
-	rm -f junkcoind.exe test_junkcoin.exe
+	rm -f luckycoind.exe test_luckycoin.exe
 	rm -f obj/*.o
 	rm -f obj-test/*.o
 	rm -f build.h

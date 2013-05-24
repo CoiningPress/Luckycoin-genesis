@@ -1,7 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2012 Litecoin Developers
-// Copyright (c) 2013 Junkcoin Developers
+// Copyright (c) 2013 Luckycoin Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -33,8 +33,8 @@ unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
 
-uint256 hashGenesisBlock("0xa2effa738145e377e08a61d76179c21703e13e48910b30a2a87f0dfe794b64c6");
-static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Junkcoin: starting difficulty is 1 / 2^12
+uint256 hashGenesisBlock("0x9b7bce58999062b63bfb18586813c42491fa32f4591d8d3043cb4fa9e551541b");
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 20); // Luckycoin: starting difficulty is 1 / 2^12
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
 CBigNum bnBestChainWork = 0;
@@ -54,7 +54,7 @@ map<uint256, map<uint256, CDataStream*> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "Junkcoin Signed Message:\n";
+const string strMessageMagic = "Luckycoin Signed Message:\n";
 
 double dHashesPerSec;
 int64 nHPSTimerStart;
@@ -831,7 +831,7 @@ uint256 static GetOrphanRoot(const CBlock* pblock)
 }
 
 
-int static generateMTRandom(int s, int range)
+int static generateMTRandom(unsigned int s, int range)
 {
 	random::mt19937 gen(s);
     random::uniform_int_distribution<> dist(1, range);
@@ -839,46 +839,40 @@ int static generateMTRandom(int s, int range)
 }
 
 
-int64 static GetBlockValue(int nHeight, int64 nFees)
+int64 static GetBlockValue(int nHeight, int64 nFees, uint256 prevHash)
 {
-    int64 nSubsidy = 50 * COIN;
-	printf("===>> nHeight = %d\n", nHeight);
+    int64 nSubsidy = 88 * COIN;
 
-    if(nHeight > 6220800)   // after about 12 years or 6220800 blocks, no more mining
-        return 0;
+    if(nHeight < 50000)   
+    {
+		const char* cseed = prevHash.ToString().substr(8,7).c_str();
+		long seed = hex2long(cseed);
 
-    if(nHeight < 101)   // the first 100 blocks = 1 millon junkcoins will serve as bounty (pool, exchange, faucet, wiki etc), reserved.
-    {
-        nSubsidy = 10000 * COIN;
-    }
-    else if(nHeight < 1541)   // 1st day
-    {
-        nSubsidy = 500 * COIN;
-    }
-    else if(nHeight < 2981)   // 2nd day
-    {
-        nSubsidy = 200 * COIN;
-    }
-    else if(nHeight < 5861)   // 3rd and 4th days
-    {
-        nSubsidy = 100 * COIN;
+		int rand = generateMTRandom(seed, 100000);
+
+		if(rand > 30000 && rand < 35001)		
+			nSubsidy = 188 * COIN;
+		else if(rand > 70000 && rand < 71001)	
+			nSubsidy = 588 * COIN;
+		else if(rand > 50000 && rand < 50011)	
+			nSubsidy = 5888 * COIN;
     }
     else
     {
-        // Subsidy is cut in half every 1036800 blocks, which will occur approximately every 2 years
-        nSubsidy >>= (nHeight / 1036800); // Junkcoin: 1036.8K blocks in ~2 years
+        // Subsidy is cut in half every 1,036,800 blocks, which will occur approximately every 2 years
+        nSubsidy >>= (nHeight / 1036800); // Luckycoin: 1036.8K blocks in ~2 years
 
-		int rand = generateMTRandom(nHeight, 100000);
-		// printf("===>> nHeight = %d, Rand = %d\n", nHeight, rand);
+		const char* cseed = prevHash.ToString().substr(8,7).c_str();
+		long seed = hex2long(cseed);
 
-		if(rand > 99990)
-		{
-			nSubsidy = 1000 * COIN;
-		}
-		else if (rand < 1001)
-		{
-			nSubsidy *= 3;
-		}
+		int rand = generateMTRandom(seed, 100000);
+
+		if(rand > 30000 && rand < 35001)		
+			nSubsidy *= 2;
+		else if(rand > 70000 && rand < 71001)	
+			nSubsidy *= 5;
+		else if(rand > 50000 && rand < 50011)	
+			nSubsidy *= 58;
     }
 
     return nSubsidy + nFees;
@@ -886,9 +880,8 @@ int64 static GetBlockValue(int nHeight, int64 nFees)
 
 
 
-static const int64 nTargetTimespan = 24 * 60 * 60; // Junkcoin: 1 day
-static const int64 nTargetSpacing = 60; // Junkcoin: 1 minutes
-// static const int64 nTargetSpacing = 15; // test: 15 sec
+static const int64 nTargetTimespan = 4 * 60 * 60; // Luckycoin: every 4 hours
+static const int64 nTargetSpacing = 60; // Luckycoin: 1 minutes
 static const int64 nInterval = nTargetTimespan / nTargetSpacing;
 
 //
@@ -930,7 +923,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         // Special difficulty rule for testnet:
         if (fTestNet)
         {
-            // If the new block's timestamp is more than 2* 10 minutes
+            // If the new block's timestamp is more than 2*nTargetSpacing minutes
             // then allow mining of a min-difficulty block.
             if (pblock->nTime > pindexLast->nTime + nTargetSpacing*2)
                 return nProofOfWorkLimit;
@@ -947,7 +940,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
         return pindexLast->nBits;
     }
 
-    // Junkcoin: This fixes an issue where a 51% attack can change difficulty at will.
+    // Luckycoin: This fixes an issue where a 51% attack can change difficulty at will.
     // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
     int blockstogoback = nInterval-1;
     if ((pindexLast->nHeight+1) != nInterval)
@@ -962,10 +955,28 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     // Limit adjustment step
     int64 nActualTimespan = pindexLast->GetBlockTime() - pindexFirst->GetBlockTime();
     printf("  nActualTimespan = %"PRI64d"  before bounds\n", nActualTimespan);
-    if (nActualTimespan < nTargetTimespan/4)
-        nActualTimespan = nTargetTimespan/4;
-    if (nActualTimespan > nTargetTimespan*4)
-        nActualTimespan = nTargetTimespan*4;
+
+	if(pindexLast->nHeight+1 > 10000)	
+	{
+		if (nActualTimespan < nTargetTimespan/4)
+			nActualTimespan = nTargetTimespan/4;
+		if (nActualTimespan > nTargetTimespan*4)
+			nActualTimespan = nTargetTimespan*4;
+	}
+	else if(pindexLast->nHeight+1 > 5000)
+	{
+		if (nActualTimespan < nTargetTimespan/8)
+			nActualTimespan = nTargetTimespan/8;
+		if (nActualTimespan > nTargetTimespan*4)
+			nActualTimespan = nTargetTimespan*4;
+	}
+	else 
+	{
+		if (nActualTimespan < nTargetTimespan/16)
+			nActualTimespan = nTargetTimespan/16;
+		if (nActualTimespan > nTargetTimespan*4)
+			nActualTimespan = nTargetTimespan*4;
+	}
 
     // Retarget
     CBigNum bnNew;
@@ -1219,7 +1230,7 @@ bool CTransaction::ConnectInputs(MapPrevTx inputs,
 {
     // Take over previous transactions' spent pointers
     // fBlock is true when this is called from AcceptBlock when a new best-block is added to the blockchain
-    // fMiner is true when called from the internal junkcoin miner
+    // fMiner is true when called from the internal luckycoin miner
     // ... both are false when called from CTransaction::AcceptToMemoryPool
     if (!IsCoinBase())
     {
@@ -1456,7 +1467,13 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex)
             return error("ConnectBlock() : UpdateTxIndex failed");
     }
 
-    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees))
+	uint256 prevHash = 0;
+	if(pindex->pprev)
+	{
+		prevHash = pindex->pprev->GetBlockHash();
+	}
+
+    if (vtx[0].GetValueOut() > GetBlockValue(pindex->nHeight, nFees, prevHash))
         return false;
 
     // Update block index on disk without changing it in memory.
@@ -1966,7 +1983,7 @@ bool CheckDiskSpace(uint64 nAdditionalBytes)
         string strMessage = _("Warning: Disk space is low");
         strMiscWarning = strMessage;
         printf("*** %s\n", strMessage.c_str());
-        uiInterface.ThreadSafeMessageBox(strMessage, "Junkcoin", CClientUIInterface::OK | CClientUIInterface::ICON_EXCLAMATION | CClientUIInterface::MODAL);
+        uiInterface.ThreadSafeMessageBox(strMessage, "Luckycoin", CClientUIInterface::OK | CClientUIInterface::ICON_EXCLAMATION | CClientUIInterface::MODAL);
         StartShutdown();
         return false;
     }
@@ -2022,7 +2039,7 @@ bool LoadBlockIndex(bool fAllowNew)
         pchMessageStart[1] = 0xc1;
         pchMessageStart[2] = 0xb7;
         pchMessageStart[3] = 0xdc;
-        hashGenesisBlock = uint256("0x893f3509f074447e18e387f173a9d1773df4089a6121023a669c499b588869c9");
+        hashGenesisBlock = uint256("0x5d2fc8d1cb81c089c8dc7a71d755eb2589a7973471598dc513a599e3f0662eaf");
     }
 
     //
@@ -2042,44 +2059,43 @@ bool LoadBlockIndex(bool fAllowNew)
             return false;
 
         // Genesis Block:
-		// block.GetHash() = a2effa738145e377e08a61d76179c21703e13e48910b30a2a87f0dfe794b64c6
-		// hashGenesisBlock = a2effa738145e377e08a61d76179c21703e13e48910b30a2a87f0dfe794b64c6
-		// block.hashMerkleRoot = 3de124b0274307911fe12550e96bf76cb92c12835db6cb19f82658b8aca1dbc8
-		// CBlock(hash=a2effa738145e377e08a, PoW=f0bb8fb675fe7c363136, ver=1, hashPrevBlock=00000000000000000000, 
-		//     hashMerkleRoot=3de124b027, nTime=1367394064, nBits=1e0ffff0, nNonce=112158625, vtx=1)
-		//   CTransaction(hash=3de124b027, ver=1, vin.size=1, vout.size=1, nLockTime=0)
-		//     CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d01044c5d576564204d617920312c20323031333a2053706f7420676f6c642066656c6c20312e332070657263656e7420746f2024312c3435372e393020616e206f756e636520627920333a313120702e6d2e2045445420283139313120474d5429)
-		//     CTxOut(nValue=50.00000000, scriptPubKey=040184710fa689ad5023690c80f3a4)
-		//   vMerkleTree: 3de124b027 
+		// hashGenesisBlock = 9b7bce58999062b63bfb18586813c42491fa32f4591d8d3043cb4fa9e551541b
+		// block.hashMerkleRoot = 6f80efd038566e1e3eab3e1d38131604d06481e77f2462235c6a9a94b1f8abf9
+		// CBlock(hash=9b7bce58999062b63bfb, PoW=caeb449903dc4f0e0ee2, ver=1, hashPrevBlock=00000000000000000000, 
+		//     hashMerkleRoot=6f80efd038, nTime=1369199888, nBits=1e0ffff0, nNonce=11288888, vtx=1)
+		//   CTransaction(hash=6f80efd038, ver=1, vin.size=1, vout.size=1, nLockTime=0)
+		//     CTxIn(COutPoint(0000000000, -1), coinbase 04ffff001d01044cd14d61792032322c20323031332c2031323a313620612e6d2e204544543a204a6170616e9273204e696b6b65692053746f636b2041766572616765204a503a4e494b202b312e3737252c20776869636820656e6465642061742074686569722068696768657374206c6576656c20696e206d6f7265207468616e206669766520796561727320696e2065616368206f6620746865206c6173742074687265652074726164696e672073657373696f6e732c20636c696d6265642061206675727468657220312e3225205765646e6573646179)
+		//     CTxOut(nValue=88.00000000, scriptPubKey=040184710fa689ad5023690c80f3a4)
+		//   vMerkleTree: 6f80efd038 
 
         // Genesis block
-        const char* pszTimestamp = "Wed May 1, 2013: Spot gold fell 1.3 percent to $1,457.90 an ounce by 3:11 p.m. EDT (1911 GMT)";
+        const char* pszTimestamp = "May 22, 2013, 12:16 a.m. EDT: Japan’s Nikkei Stock Average JP:NIK +1.77%, which ended at their highest level in more than five years in each of the last three trading sessions, climbed a further 1.2% Wednesday";
         CTransaction txNew;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(4) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
-        txNew.vout[0].nValue = 50 * COIN;
+        txNew.vout[0].nValue = 88 * COIN;
         txNew.vout[0].scriptPubKey = CScript() << ParseHex("040184710fa689ad5023690c80f3a49c8f13f8d45b8c857fbcbc8bc4a8e4d3eb4b10f4d4604fa08dce601aaf0f470216fe1b51850b4acf21b179c45070ac7b03a9") << OP_CHECKSIG;
         CBlock block;
         block.vtx.push_back(txNew);
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1367394064;
+        block.nTime    = 1369199888;
         block.nBits    = 0x1e0ffff0;
-        block.nNonce   = 112158625;
+        block.nNonce   = 11288888;
 
         if (fTestNet)
         {
-            block.nTime    = 1361718146;
-            block.nNonce   = 108784949;
+            block.nTime    = 1361718171;
+            block.nNonce   = 108788888;
         }
 
         //// debug print
         printf("block.GetHash() = %s\n", block.GetHash().ToString().c_str());
         printf("hashGenesisBlock = %s\n", hashGenesisBlock.ToString().c_str());
         printf("block.hashMerkleRoot = %s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0x3de124b0274307911fe12550e96bf76cb92c12835db6cb19f82658b8aca1dbc8"));
+        assert(block.hashMerkleRoot == uint256("0x6f80efd038566e1e3eab3e1d38131604d06481e77f2462235c6a9a94b1f8abf9"));
 
         // If genesis block hash does not match, then generate new genesis hash.
         if (false && block.GetHash() != hashGenesisBlock)
@@ -2427,7 +2443,7 @@ bool static AlreadyHave(CTxDB& txdb, const CInv& inv)
 // The message start string is designed to be unlikely to occur in normal data.
 // The characters are rarely used upper ascii, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
-unsigned char pchMessageStart[4] = { 0xfb, 0xc0, 0xb6, 0xdb }; // Junkcoin: increase each by adding 2 to bitcoin's value.
+unsigned char pchMessageStart[4] = { 0xfb, 0xc0, 0xb6, 0xdb }; // Luckycoin: increase each by adding 2 to bitcoin's value.
 
 
 bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
@@ -3515,7 +3531,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey)
                 continue;
 
             // Transaction fee required depends on block size
-            // Junkcoind: Reduce the exempted free transactions to 500 bytes (from Bitcoin's 3000 bytes)
+            // Luckycoind: Reduce the exempted free transactions to 500 bytes (from Bitcoin's 3000 bytes)
             bool fAllowFree = (nBlockSize + nTxSize < 1500 || CTransaction::AllowFree(dPriority));
             int64 nMinFee = tx.GetMinFee(nBlockSize, fAllowFree, GMF_BLOCK);
 
@@ -3568,7 +3584,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey)
         printf("CreateNewBlock(): total size %lu\n", nBlockSize);
 
     }
-    pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees);
+    pblock->vtx[0].vout[0].nValue = GetBlockValue(pindexPrev->nHeight+1, nFees, pindexPrev->GetBlockHash());
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
@@ -3656,7 +3672,6 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     printf("BitcoinMiner:\n");
     printf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
     pblock->print();
-    // printf("Hash = %s\n", pblock->GetHash().ToString().c_str());
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
 
     // Found a solution

@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2012 The Bitcoin developers
 // Copyright (c) 2011-2012 Litecoin Developers
-// Copyright (c) 2013 Junkcoin Developers
+// Copyright (c) 2013 Luckycoin Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,10 +27,10 @@ namespace Checkpoints
 	// no checkpoint now, can be added in later releases
     static MapCheckpoints mapCheckpoints =
             boost::assign::map_list_of
-            (  1, uint256("0x11b82349e53d49a5b5ef6262c262564e7663d8cfd912b0040b33683f623022f2"))
-            ( 11, uint256("0xc8fc42e967eebdeafcabbd9050a545617f8685d53f2ebcd8f0fa5002b7e62a86"))
-            ( 59, uint256("0xcdde8a3e42fa8888df2db8bf6673b29f5e2ae29951275d452686c47acb51cb66"))
-            (104, uint256("0x206fe8cc678598456a11041fac65c8e096d9e26c887e391977fdad41e7add208"))
+            (  1, uint256("0xcf2f78756f0fa64bc4ce80e6d500661cc4c20f2be28c7d859467dceb0adfa2de"))
+            ( 53, uint256("0x9343eae8db94d5d5e945b0c0a6b83647b6a3a8fd89cd170a757e06dcbf2e3bed"))
+            (117, uint256("0x5208d62f44467e800a92bfb18fc0fd4c39d9fed28f4ad160262f96dd90111ec3"))
+            (200, uint256("0xa5ce00c4aab4f9deccbef0af27adadb29cbf111eb442e92895d7302eb047ad4e"))
 			;
         /*
         boost::assign::map_list_of
